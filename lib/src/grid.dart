@@ -1,4 +1,3 @@
-
 /// A grid.
 class Grid {
   final List<Column> _column;
@@ -22,14 +21,6 @@ class Grid {
   /// Returns the column at the given [index] or throws a [RangeError] if
   /// [index] is out of bounds.
   Column operator [](int index) => _column[index];
-
-  /// Sets [values] for the row at the given [index] or throws a [RangeError]
-  /// if [index] is out of bounds.
-  void operator []=(int index, List<int> values) {
-    for (var i = 0; i < values.length; ++i) {
-      this[i][index] = values[i];
-    }
-  }
 
   @override
   String toString() {
@@ -55,21 +46,22 @@ class Grid {
 
 /// A grid column.
 class Column {
-  final List<int> values;
+  final List<int> _values;
 
-  Column(int n) : values = new List.filled(n, 0, growable: false);
+  Column(int n) : _values = new List.filled(n, 0, growable: false);
 
   /// Returns the column value at the given [index] or throws a [RangeError] if
   /// [index] is out of bounds.
-  int operator [](int index) => values[index];
+  int operator [](int index) => _values[index];
 
   /// Sets the value at the given [index] in the column to [value]
   /// or throws a [RangeError] if [index] is out of bounds.
   void operator []=(int index, int value) {
-    values[index] = value;
+    _values[index] = value;
   }
 
-  int get length => values.length;
+  /// Returns the number of leds in this column.
+  int get length => _values.length;
 
   /// Sets the values in the range [start] inclusive to [end] exclusive
   /// to the given [fillValue].
@@ -79,7 +71,7 @@ class Column {
   /// where `len` is this column's `length`. The range starts at `start` and has
   /// length `end - start`. An empty range (with `end == start`) is valid.
   void fillRange(int start, int end, [int fillValue]) {
-    values.fillRange(start, end, fillValue);
+    _values.fillRange(start, end, fillValue);
   }
 }
 
@@ -157,7 +149,7 @@ class SetColCommand extends GridCommand {
 
   @override
   void runOn(Grid grid) {
-    grid._column[x].values.setRange(yOffset, yOffset + level.length, level);
+    grid._column[x]._values.setRange(yOffset, yOffset + level.length, level);
   }
 }
 
