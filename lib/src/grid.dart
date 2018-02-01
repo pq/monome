@@ -1,3 +1,5 @@
+import 'package:osc/osc.dart';
+
 /// A grid.
 class Grid {
   final List<Column> _column;
@@ -76,9 +78,139 @@ class Column {
 }
 
 /// Abstract grid command.
-// ignore: one_member_abstracts
 abstract class GridCommand {
   void runOn(Grid grid);
+
+  static GridCommand fromOSC(OSCMessage message) =>
+      new OSCMessageParser(message).parse();
+}
+
+class OSCMessageParser {
+  OSCMessage message;
+  OSCMessageParser(this.message);
+
+  GridCommand parse() {
+    final address = message.address;
+    switch (address) {
+      case '/grid/led/level/set':
+        return parseSet();
+      case '/grid/led/level/all':
+        return parseSetAll();
+      case '/grid/led/level/row':
+        return parseSetRow();
+      case '/grid/led/level/col':
+        return parseSetCol();
+      case '/grid/led/level/map':
+        return parseMap();
+    }
+    throw new ParseError('Unrecognized command: $address');
+  }
+
+  List<Object> get arguments => message.arguments;
+
+  GridCommand parseSet() {
+    assertArgs(3);
+    var x = argToInt(0);
+    var y = argToInt(1);
+    var level = argToInt(2);
+    return new SetCommand(x, y, level);
+  }
+
+  GridCommand parseSetAll() {
+    assertArgs(1);
+    var level = argToInt(0);
+    return new SetAllCommand(level);
+  }
+
+  GridCommand parseSetRow() {
+    if (arguments.length < 3) {
+      throw new ParseError(
+          'invalid arguments for row set, expected: `x_off y l[..]`, got: $arguments');
+    }
+    var x = argToInt(0);
+    var y = argToInt(1);
+    var levels = argToIntOctet(2);
+    return new SetRowCommand(x, y, levels);
+  }
+
+  GridCommand parseSetCol() {
+    if (arguments.length < 3) {
+      throw new ParseError(
+          'invalid arguments for col set, expected: `x y_off l[..]`, got: $arguments');
+    }
+    var x = argToInt(0);
+    var yOffset = argToInt(1);
+    var levels = argToIntOctet(2);
+    return new SetColCommand(x, yOffset, levels);
+  }
+
+  GridCommand parseMap() {
+    if (arguments.length < 3) {
+      throw new ParseError(
+          'invalid arguments for col set, expected: `x_off y_off l[64]`, got: $arguments');
+    }
+    var xOffset = argToInt(0);
+    var yOffset = argToInt(1);
+    var levels = argToIntQuad(2);
+    return new MapCommand(xOffset, yOffset, levels);
+  }
+
+  int argToInt(int index) => toInt(arguments[index]);
+
+  int toInt(Object argument) {
+    if (argument is! int) {
+      throw new ParseError('expected int, got: ${toTypeString(argument)}');
+    }
+    return argument;
+  }
+
+  List<int> argToIntOctet(int index) {
+    final remaining = arguments.length - index;
+    if (remaining % 8 != 0) {
+      throw new ParseError('expected multiple of 8 values, got: $remaining}');
+    }
+
+    var octet = <int>[remaining];
+    for (var value in arguments.sublist(index)) {
+      octet.add(toInt(value));
+    }
+
+    return octet;
+  }
+
+  List<int> argToIntQuad(int index) {
+    final remaining = arguments.length - index;
+    if (remaining != 64) {
+      throw new ParseError('expected quad (64) of values, got: $remaining}');
+    }
+
+    var octet = <int>[remaining];
+    for (var value in arguments.sublist(index)) {
+      octet.add(toInt(value));
+    }
+
+    return octet;
+  }
+
+  String toTypeString(Object argument) =>
+      argument == null ? 'null' : argument.runtimeType.toString();
+
+  void assertArgs(int length) {
+    if (arguments.length != length) {
+      throw new ParseError(
+          'expected $length arguments, got: ${arguments.length}');
+    }
+  }
+}
+
+/// Thrown in case of parse error.
+class ParseError extends Error {
+  Object detail;
+
+  ParseError(this.detail);
+
+  @override
+  String toString() => 'Parse Error: ${Error.safeToString(detail)}';
 }
 
 /// Set the value of a single led.

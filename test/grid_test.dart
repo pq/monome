@@ -1,4 +1,5 @@
 import 'package:monome/src/grid.dart';
+import 'package:osc/osc.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -88,6 +89,54 @@ void main() {
           expect(grid[i][y * 2 + 1], row2[i]);
         }
       }
+    });
+
+    group('fromOSC', () {
+      test('parse error', () {
+        var msg = new OSCMessage('/grid/led/level/set',
+            arguments: <int>[0, 0 /* missing level */]);
+        expect(() => GridCommand.fromOSC(msg),
+            throwsA(const isInstanceOf<ParseError>()));
+      });
+      test('parse error (message)', () {
+        expect(new ParseError('detail message').toString(),
+            'Parse Error: "detail message"');
+      });
+
+      test('set', () {
+        var msg =
+            new OSCMessage('/grid/led/level/set', arguments: <int>[0, 0, 3]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetCommand>());
+      });
+      test('set all', () {
+        var msg = new OSCMessage('/grid/led/level/all', arguments: <int>[0]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetAllCommand>());
+      });
+      test('set row', () {
+        var msg = new OSCMessage('/grid/led/level/row',
+            arguments: <int>[0, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetRowCommand>());
+      });
+      test('set col', () {
+        var msg = new OSCMessage('/grid/led/level/col',
+            arguments: <int>[0, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetColCommand>());
+      });
+      test('map', () {
+        var quad = [
+          0, 1, 2, 3, 4, 5, 6, 7, //
+          8, 9, 10, 11, 12, 13, 14, 15, //
+          0, 1, 2, 3, 4, 5, 6, 7, //
+          8, 9, 10, 11, 12, 13, 14, 15, //
+          0, 1, 2, 3, 4, 5, 6, 7, //
+          8, 9, 10, 11, 12, 13, 14, 15, //
+          0, 1, 2, 3, 4, 5, 6, 7, //
+          8, 9, 10, 11, 12, 13, 14, 15, //
+        ];
+        var msg = new OSCMessage('/grid/led/level/map',
+            arguments: [0, 0]..addAll(quad));
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<MapCommand>());
+      });
     });
   });
 }
