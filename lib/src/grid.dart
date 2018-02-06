@@ -11,7 +11,7 @@ class Grid {
   final int rows;
 
   /// Create a grid with [rows] rows and [columns] columns.
-  Grid(this.rows, this.columns)
+  Grid({this.rows: 8, this.columns: 16})
       : _column = new List.generate(columns, (_) => new Column(rows),
             growable: false);
 

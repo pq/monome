@@ -6,7 +6,7 @@ void main() {
   Grid grid;
 
   setUp(() {
-    grid = new Grid(8, 16);
+    grid = new Grid();
   });
 
   group('grid', () {
