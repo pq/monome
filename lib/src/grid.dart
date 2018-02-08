@@ -102,6 +102,8 @@ class OSCMessageParser {
         return parseSetCol();
       case '/grid/led/level/map':
         return parseMap();
+      case '/grid/key':
+        return parseKey();
     }
     throw new ParseError('Unrecognized command: $address');
   }
@@ -153,6 +155,14 @@ class OSCMessageParser {
     var yOffset = argToInt(1);
     var levels = argToIntQuad(2);
     return new MapCommand(xOffset, yOffset, levels);
+  }
+
+  GridCommand parseKey() {
+    assertArgs(3);
+    var x = argToInt(0);
+    var y = argToInt(1);
+    var state = argToInt(2);
+    return new KeyCommand(x, y, state);
   }
 
   int argToInt(int index) => toInt(arguments[index]);
@@ -211,6 +221,22 @@ class ParseError extends Error {
 
   @override
   String toString() => 'Parse Error: ${Error.safeToString(detail)}';
+}
+
+/// Device key state change.
+///
+/// `/grid/key x y s`
+class KeyCommand extends GridCommand {
+  final int x, y, state;
+
+  /// Key state change at ([x],[y]) to [state] (0 or 1, 1 = key down,
+  /// 0 = key up).
+  KeyCommand(this.x, this.y, this.state);
+
+  @override
+  void runOn(Grid grid) {
+    throw new StateError("grids create key commands, but can't run them");
+  }
 }
 
 /// Set the value of a single led.

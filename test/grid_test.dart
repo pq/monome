@@ -90,6 +90,10 @@ void main() {
         }
       }
     });
+    test('key', () {
+      final cmd = new KeyCommand(0, 0, 1);
+      expect(() => grid.run(cmd), throwsA(const isInstanceOf<StateError>()));
+    });
 
     group('fromOSC', () {
       test('parse error', () {
@@ -102,7 +106,10 @@ void main() {
         expect(new ParseError('detail message').toString(),
             'Parse Error: "detail message"');
       });
-
+      test('key', () {
+        var msg = new OSCMessage('/grid/key', arguments: <int>[0, 0, 1]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<KeyCommand>());
+      });
       test('set', () {
         var msg =
             new OSCMessage('/grid/led/level/set', arguments: <int>[0, 0, 3]);
