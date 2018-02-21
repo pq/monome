@@ -77,12 +77,51 @@ class Column {
   }
 }
 
-/// Abstract grid command.
+/// A command that when run changes the state of a grid.
 abstract class GridCommand {
   void runOn(Grid grid);
 
   static GridCommand fromOSC(OSCMessage message) =>
       new OSCMessageParser(message).parse();
+}
+
+/// An event produced by a device.
+abstract class DeviceEvent {
+  final String command;
+
+  const DeviceEvent(this.command);
+
+  factory DeviceEvent.keyDown(int x, int y) => new KeyEvent(x, y, 1);
+
+  factory DeviceEvent.keyUp(int x, int y) => new KeyEvent(x, y, 0);
+
+  /// Event arguments (for use in producing OSC messages).
+  List<Object> get _args;
+
+  /// Convert this event to an OSC message.
+  OSCMessage toOSC() => new OSCMessage(command, arguments: _args);
+}
+
+/// Device key state change.
+///
+/// `/grid/key x y s`
+class KeyEvent extends DeviceEvent {
+
+  /// Key coordinates.
+  final int x, y;
+
+  /// Key state (1: down, 0: up).
+  final int state;
+
+  /// Key state change at ([x],[y]) to [state] (0 or 1, 1 = key down,
+  /// 0 = key up).
+  const KeyEvent(this.x, this.y, this.state) : super('/grid/key');
+
+  @override
+  String toString() => '$command $x $y $state';
+
+  @override
+  List<Object> get _args => <int>[x, y, state];
 }
 
 class OSCMessageParser {
@@ -102,8 +141,6 @@ class OSCMessageParser {
         return parseSetCol();
       case '/grid/led/level/map':
         return parseMap();
-      case '/grid/key':
-        return parseKey();
     }
     throw new ParseError('Unrecognized command: $address');
   }
@@ -155,14 +192,6 @@ class OSCMessageParser {
     var yOffset = argToInt(1);
     var levels = argToIntQuad(2);
     return new MapCommand(xOffset, yOffset, levels);
-  }
-
-  GridCommand parseKey() {
-    assertArgs(3);
-    var x = argToInt(0);
-    var y = argToInt(1);
-    var state = argToInt(2);
-    return new KeyCommand(x, y, state);
   }
 
   int argToInt(int index) => toInt(arguments[index]);
@@ -221,22 +250,6 @@ class ParseError extends Error {
 
   @override
   String toString() => 'Parse Error: ${Error.safeToString(detail)}';
-}
-
-/// Device key state change.
-///
-/// `/grid/key x y s`
-class KeyCommand extends GridCommand {
-  final int x, y, state;
-
-  /// Key state change at ([x],[y]) to [state] (0 or 1, 1 = key down,
-  /// 0 = key up).
-  KeyCommand(this.x, this.y, this.state);
-
-  @override
-  void runOn(Grid grid) {
-    throw new StateError("grids create key commands, but can't run them");
-  }
 }
 
 /// Set the value of a single led.
