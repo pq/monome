@@ -81,8 +81,10 @@ class Column {
 abstract class GridCommand {
   void runOn(Grid grid);
 
-  static GridCommand fromOSC(OSCMessage message) =>
-      new OSCMessageParser(message).parse();
+  static GridCommand fromOSC(OSCMessage message, {String prefix}) =>
+      new OSCMessageParser(message, prefix: prefix).parse();
+
+  int _toLevel(int state) => state == 1 ? 15 : 0;
 }
 
 /// An event produced by a device.
@@ -106,7 +108,6 @@ abstract class DeviceEvent {
 ///
 /// `/grid/key x y s`
 class KeyEvent extends DeviceEvent {
-
   /// Key coordinates.
   final int x, y;
 
@@ -124,15 +125,27 @@ class KeyEvent extends DeviceEvent {
   List<Object> get _args => <int>[x, y, state];
 }
 
+class ConnectEvent extends DeviceEvent {
+  ConnectEvent() : super('/sys/connect');
+
+  @override
+  List<Object> get _args => [];
+}
+
 class OSCMessageParser {
-  OSCMessage message;
-  OSCMessageParser(this.message);
+  final OSCMessage message;
+  final String prefix;
+  OSCMessageParser(this.message, {this.prefix});
 
   GridCommand parse() {
-    final address = message.address;
+    final address = _applyPrefix();
     switch (address) {
+      case '/grid/led/set':
+        return parseStateSet();
       case '/grid/led/level/set':
-        return parseSet();
+        return parseLevelSet();
+      case '/grid/led/all':
+        return parseStateSetAll();
       case '/grid/led/level/all':
         return parseSetAll();
       case '/grid/led/level/row':
@@ -145,20 +158,42 @@ class OSCMessageParser {
     throw new ParseError('Unrecognized command: $address');
   }
 
+  String _applyPrefix() {
+    var address = message.address;
+    if (prefix != null && address.startsWith(prefix)) {
+      address = address.substring(prefix.length);
+    }
+    return address;
+  }
+
   List<Object> get arguments => message.arguments;
 
-  GridCommand parseSet() {
+  GridCommand parseLevelSet() {
     assertArgs(3);
     var x = argToInt(0);
     var y = argToInt(1);
     var level = argToInt(2);
-    return new SetCommand(x, y, level);
+    return new LevelSetCommand(x, y, level);
+  }
+
+  GridCommand parseStateSet() {
+    assertArgs(3);
+    var x = argToInt(0);
+    var y = argToInt(1);
+    var state = argToInt(2);
+    return new StateSetCommand(x, y, state);
   }
 
   GridCommand parseSetAll() {
     assertArgs(1);
     var level = argToInt(0);
-    return new SetAllCommand(level);
+    return new LevelSetAllCommand(level);
+  }
+
+  GridCommand parseStateSetAll() {
+    assertArgs(1);
+    var state = argToInt(0);
+    return new StateSetAllCommand(state);
   }
 
   GridCommand parseSetRow() {
@@ -252,14 +287,29 @@ class ParseError extends Error {
   String toString() => 'Parse Error: ${Error.safeToString(detail)}';
 }
 
+/// Set the state of a single led.
+///
+/// `/grid/led/set x y s`
+class StateSetCommand extends GridCommand {
+  final int x, y, state;
+
+  /// Set led at ([x],[y]) to [state] on (1) or off (0).
+  StateSetCommand(this.x, this.y, this.state);
+
+  @override
+  void runOn(Grid grid) {
+    grid[x][y] = _toLevel(state);
+  }
+}
+
 /// Set the value of a single led.
 ///
 /// `/grid/led/level/set x y l`
-class SetCommand extends GridCommand {
+class LevelSetCommand extends GridCommand {
   final int x, y, level;
 
   /// Set led at ([x],[y]) to [level] in the range [0, 15].
-  SetCommand(this.x, this.y, this.level);
+  LevelSetCommand(this.x, this.y, this.level);
 
   @override
   void runOn(Grid grid) {
@@ -267,15 +317,33 @@ class SetCommand extends GridCommand {
   }
 }
 
+/// Set the state of all the leds in a single message.
+///
+/// `/grid/led/all s`
+///
+class StateSetAllCommand extends GridCommand {
+  final int state;
+
+  /// Set all leds to [state] on (1) or off(0).
+  StateSetAllCommand(this.state);
+
+  @override
+  void runOn(Grid grid) {
+    for (var col in grid._column) {
+      col.fillRange(0, col.length, _toLevel(state));
+    }
+  }
+}
+
 /// Set the value of all the leds in a single message.
 ///
 /// `/grid/led/level/all l`
 ///
-class SetAllCommand extends GridCommand {
+class LevelSetAllCommand extends GridCommand {
   final int level;
 
   /// Set all leds to [level] in the range [0, 15].
-  SetAllCommand(this.level);
+  LevelSetAllCommand(this.level);
 
   @override
   void runOn(Grid grid) {

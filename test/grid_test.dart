@@ -35,19 +35,19 @@ void main() {
   });
 
   group('commands', () {
-    test('set', () {
-      grid.run(new SetCommand(3, 3, 1));
+    test('level set', () {
+      grid.run(new LevelSetCommand(3, 3, 1));
       expect(grid[3][3], 1);
     });
-    test('set all', () {
-      grid.run(new SetAllCommand(1));
+    test('level set all', () {
+      grid.run(new LevelSetAllCommand(1));
       for (var m = 0; m < 16; ++m) {
         for (var n = 0; n < 8; ++n) {
           expect(grid[m][n], 1);
         }
       }
 
-      grid.run(new SetAllCommand(0));
+      grid.run(new LevelSetAllCommand(0));
       for (var m = 0; m < 16; ++m) {
         for (var n = 0; n < 8; ++n) {
           expect(grid[m][n], 0);
@@ -117,14 +117,24 @@ void main() {
         expect(new ParseError('detail message').toString(),
             'Parse Error: "detail message"');
       });
-      test('set', () {
+      test('level set', () {
         var msg =
             new OSCMessage('/grid/led/level/set', arguments: <int>[0, 0, 3]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetCommand>());
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<LevelSetCommand>());
       });
-      test('set all', () {
+      test('state set', () {
+        var msg = new OSCMessage('/grid/led/set', arguments: <int>[0, 0, 1]);
+        expect(GridCommand.fromOSC(msg), const isInstanceOf<StateSetCommand>());
+      });
+      test('level set all', () {
+        var msg = new OSCMessage('/grid/led/all', arguments: <int>[0]);
+        expect(
+            GridCommand.fromOSC(msg), const isInstanceOf<StateSetAllCommand>());
+      });
+      test('state set all', () {
         var msg = new OSCMessage('/grid/led/level/all', arguments: <int>[0]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetAllCommand>());
+        expect(
+            GridCommand.fromOSC(msg), const isInstanceOf<LevelSetAllCommand>());
       });
       test('set row', () {
         var msg = new OSCMessage('/grid/led/level/row',
