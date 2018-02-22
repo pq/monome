@@ -100,6 +100,10 @@ void main() {
           expect(new DeviceEvent.keyDown(0, 0).toOSC(),
               new OSCMessage('/grid/key', arguments: <int>[0, 0, 1]));
         });
+        test('toOSC (prefixed)', () {
+          expect(new DeviceEvent.keyDown(0, 0).toOSC(prefix: '/monome'),
+              new OSCMessage('/monome/grid/key', arguments: <int>[0, 0, 1]));
+        });
         test('toString', () {
           expect(new DeviceEvent.keyDown(0, 0).toString(), '/grid/key 0 0 1');
         });

@@ -100,8 +100,11 @@ abstract class DeviceEvent {
   /// Event arguments (for use in producing OSC messages).
   List<Object> get _args;
 
-  /// Convert this event to an OSC message.
-  OSCMessage toOSC() => new OSCMessage(command, arguments: _args);
+  /// Convert this event to an OSC message, with an optional [prefix].
+  OSCMessage toOSC({String prefix}) =>
+      new OSCMessage(_prefix(command, prefix: prefix), arguments: _args);
+
+  String _prefix(String command, {String prefix}) => '${prefix ?? ""}$command';
 }
 
 /// Device key state change.
