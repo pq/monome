@@ -6,7 +6,7 @@ void main() {
   Grid grid;
 
   setUp(() {
-    grid = new Grid();
+    grid = Grid();
   });
 
   group('grid', () {
@@ -16,7 +16,7 @@ void main() {
     });
     test('toString', () {
       var col = [0, 1, 2, 3, 4, 5, 6, 7];
-      grid.run(new SetColCommand(0, 0, col));
+      grid.run(SetColCommand(0, 0, col));
       for (var i = 0; i < col.length; ++i) {
         expect(grid.toString(), r'''
 ------------------------------------------------
@@ -36,18 +36,18 @@ void main() {
 
   group('commands', () {
     test('level set', () {
-      grid.run(new LevelSetCommand(3, 3, 1));
+      grid.run(LevelSetCommand(3, 3, 1));
       expect(grid[3][3], 1);
     });
     test('level set all', () {
-      grid.run(new LevelSetAllCommand(1));
+      grid.run(LevelSetAllCommand(1));
       for (var m = 0; m < 16; ++m) {
         for (var n = 0; n < 8; ++n) {
           expect(grid[m][n], 1);
         }
       }
 
-      grid.run(new LevelSetAllCommand(0));
+      grid.run(LevelSetAllCommand(0));
       for (var m = 0; m < 16; ++m) {
         for (var n = 0; n < 8; ++n) {
           expect(grid[m][n], 0);
@@ -56,14 +56,14 @@ void main() {
     });
     test('set row', () {
       var row = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-      grid.run(new SetRowCommand(0, 0, row));
+      grid.run(SetRowCommand(0, 0, row));
       for (var i = 0; i < row.length; ++i) {
         expect(grid[i][0], row[i]);
       }
     });
     test('set col', () {
       var col = [0, 1, 2, 3, 4, 5, 6, 7];
-      grid.run(new SetColCommand(0, 0, col));
+      grid.run(SetColCommand(0, 0, col));
       for (var i = 0; i < col.length; ++i) {
         expect(grid[0][i], col[i]);
       }
@@ -71,7 +71,7 @@ void main() {
     test('map', () {
       var row1 = [0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0];
       var row2 = [8, 9, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0];
-      grid.run(new MapCommand(0, 0, [
+      grid.run(MapCommand(0, 0, [
         0, 1, 2, 3, 4, 5, 6, 7, //
         8, 9, 10, 11, 12, 13, 14, 15, //
         0, 1, 2, 3, 4, 5, 6, 7, //
@@ -94,61 +94,57 @@ void main() {
     group('events', () {
       group('key', () {
         test('command', () {
-          expect(new DeviceEvent.keyDown(0, 0).command, '/grid/key');
+          expect(DeviceEvent.keyDown(0, 0).command, '/grid/key');
         });
         test('toOSC', () {
-          expect(new DeviceEvent.keyDown(0, 0).toOSC(),
-              new OSCMessage('/grid/key', arguments: <int>[0, 0, 1]));
+          expect(DeviceEvent.keyDown(0, 0).toOSC(),
+              OSCMessage('/grid/key', arguments: <int>[0, 0, 1]));
         });
         test('toOSC (prefixed)', () {
-          expect(new DeviceEvent.keyDown(0, 0).toOSC(prefix: '/monome'),
-              new OSCMessage('/monome/grid/key', arguments: <int>[0, 0, 1]));
+          expect(DeviceEvent.keyDown(0, 0).toOSC(prefix: '/monome'),
+              OSCMessage('/monome/grid/key', arguments: <int>[0, 0, 1]));
         });
         test('toString', () {
-          expect(new DeviceEvent.keyDown(0, 0).toString(), '/grid/key 0 0 1');
+          expect(DeviceEvent.keyDown(0, 0).toString(), '/grid/key 0 0 1');
         });
       });
     });
 
     group('fromOSC', () {
       test('parse error', () {
-        var msg = new OSCMessage('/grid/led/level/set',
+        var msg = OSCMessage('/grid/led/level/set',
             arguments: <int>[0, 0 /* missing level */]);
-        expect(() => GridCommand.fromOSC(msg),
-            throwsA(const isInstanceOf<ParseError>()));
+        expect(() => GridCommand.fromOSC(msg), throwsA(isA<ParseError>()));
       });
       test('parse error (message)', () {
-        expect(new ParseError('detail message').toString(),
+        expect(ParseError('detail message').toString(),
             'Parse Error: "detail message"');
       });
       test('level set', () {
-        var msg =
-            new OSCMessage('/grid/led/level/set', arguments: <int>[0, 0, 3]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<LevelSetCommand>());
+        var msg = OSCMessage('/grid/led/level/set', arguments: <int>[0, 0, 3]);
+        expect(GridCommand.fromOSC(msg), isA<LevelSetCommand>());
       });
       test('state set', () {
-        var msg = new OSCMessage('/grid/led/set', arguments: <int>[0, 0, 1]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<StateSetCommand>());
+        var msg = OSCMessage('/grid/led/set', arguments: <int>[0, 0, 1]);
+        expect(GridCommand.fromOSC(msg), isA<StateSetCommand>());
       });
       test('level set all', () {
-        var msg = new OSCMessage('/grid/led/all', arguments: <int>[0]);
-        expect(
-            GridCommand.fromOSC(msg), const isInstanceOf<StateSetAllCommand>());
+        var msg = OSCMessage('/grid/led/all', arguments: <int>[0]);
+        expect(GridCommand.fromOSC(msg), isA<StateSetAllCommand>());
       });
       test('state set all', () {
-        var msg = new OSCMessage('/grid/led/level/all', arguments: <int>[0]);
-        expect(
-            GridCommand.fromOSC(msg), const isInstanceOf<LevelSetAllCommand>());
+        var msg = OSCMessage('/grid/led/level/all', arguments: <int>[0]);
+        expect(GridCommand.fromOSC(msg), isA<LevelSetAllCommand>());
       });
       test('set row', () {
-        var msg = new OSCMessage('/grid/led/level/row',
+        var msg = OSCMessage('/grid/led/level/row',
             arguments: <int>[0, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetRowCommand>());
+        expect(GridCommand.fromOSC(msg), isA<SetRowCommand>());
       });
       test('set col', () {
-        var msg = new OSCMessage('/grid/led/level/col',
+        var msg = OSCMessage('/grid/led/level/col',
             arguments: <int>[0, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<SetColCommand>());
+        expect(GridCommand.fromOSC(msg), isA<SetColCommand>());
       });
       test('map', () {
         var quad = [
@@ -161,9 +157,8 @@ void main() {
           0, 1, 2, 3, 4, 5, 6, 7, //
           8, 9, 10, 11, 12, 13, 14, 15, //
         ];
-        var msg = new OSCMessage('/grid/led/level/map',
-            arguments: [0, 0]..addAll(quad));
-        expect(GridCommand.fromOSC(msg), const isInstanceOf<MapCommand>());
+        var msg = OSCMessage('/grid/led/level/map', arguments: [0, 0, ...quad]);
+        expect(GridCommand.fromOSC(msg), isA<MapCommand>());
       });
     });
   });

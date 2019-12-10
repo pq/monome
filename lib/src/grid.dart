@@ -11,9 +11,8 @@ class Grid {
   final int rows;
 
   /// Create a grid with [rows] rows and [columns] columns.
-  Grid({this.rows: 8, this.columns: 16})
-      : _column = new List.generate(columns, (_) => new Column(rows),
-            growable: false);
+  Grid({this.rows = 8, this.columns = 16})
+      : _column = List.generate(columns, (_) => Column(rows), growable: false);
 
   /// Run the given [cmd].
   void run(GridCommand cmd) {
@@ -26,10 +25,10 @@ class Grid {
 
   @override
   String toString() {
-    final sb = new StringBuffer();
+    final sb = StringBuffer();
 
     final pad = 3;
-    final edge = '${new List.filled(columns * pad, '-').join()}\n';
+    final edge = '${List.filled(columns * pad, '-').join()}\n';
     sb.write(edge);
 
     for (var y = 0; y < rows; ++y) {
@@ -50,7 +49,7 @@ class Grid {
 class Column {
   final List<int> _values;
 
-  Column(int n) : _values = new List.filled(n, 0, growable: false);
+  Column(int n) : _values = List.filled(n, 0, growable: false);
 
   /// Returns the column value at the given [index] or throws a [RangeError] if
   /// [index] is out of bounds.
@@ -82,7 +81,7 @@ abstract class GridCommand {
   void runOn(Grid grid);
 
   static GridCommand fromOSC(OSCMessage message, {String prefix}) =>
-      new OSCMessageParser(message, prefix: prefix).parse();
+      OSCMessageParser(message, prefix: prefix).parse();
 
   int _toLevel(int state) => state == 1 ? 15 : 0;
 }
@@ -93,16 +92,16 @@ abstract class DeviceEvent {
 
   const DeviceEvent(this.command);
 
-  factory DeviceEvent.keyDown(int x, int y) => new KeyEvent(x, y, 1);
+  factory DeviceEvent.keyDown(int x, int y) => KeyEvent(x, y, 1);
 
-  factory DeviceEvent.keyUp(int x, int y) => new KeyEvent(x, y, 0);
+  factory DeviceEvent.keyUp(int x, int y) => KeyEvent(x, y, 0);
 
   /// Event arguments (for use in producing OSC messages).
   List<Object> get _args;
 
   /// Convert this event to an OSC message, with an optional [prefix].
   OSCMessage toOSC({String prefix}) =>
-      new OSCMessage(_prefix(command, prefix: prefix), arguments: _args);
+      OSCMessage(_prefix(command, prefix: prefix), arguments: _args);
 
   String _prefix(String command, {String prefix}) => '${prefix ?? ""}$command';
 }
@@ -158,7 +157,7 @@ class OSCMessageParser {
       case '/grid/led/level/map':
         return parseMap();
     }
-    throw new ParseError('Unrecognized command: $address');
+    throw ParseError('Unrecognized command: $address');
   }
 
   String _applyPrefix() {
@@ -176,7 +175,7 @@ class OSCMessageParser {
     var x = argToInt(0);
     var y = argToInt(1);
     var level = argToInt(2);
-    return new LevelSetCommand(x, y, level);
+    return LevelSetCommand(x, y, level);
   }
 
   GridCommand parseStateSet() {
@@ -184,59 +183,59 @@ class OSCMessageParser {
     var x = argToInt(0);
     var y = argToInt(1);
     var state = argToInt(2);
-    return new StateSetCommand(x, y, state);
+    return StateSetCommand(x, y, state);
   }
 
   GridCommand parseSetAll() {
     assertArgs(1);
     var level = argToInt(0);
-    return new LevelSetAllCommand(level);
+    return LevelSetAllCommand(level);
   }
 
   GridCommand parseStateSetAll() {
     assertArgs(1);
     var state = argToInt(0);
-    return new StateSetAllCommand(state);
+    return StateSetAllCommand(state);
   }
 
   GridCommand parseSetRow() {
     if (arguments.length < 3) {
-      throw new ParseError(
+      throw ParseError(
           'invalid arguments for row set, expected: `x_off y l[..]`, got: $arguments');
     }
     var x = argToInt(0);
     var y = argToInt(1);
     var levels = argToIntOctet(2);
-    return new SetRowCommand(x, y, levels);
+    return SetRowCommand(x, y, levels);
   }
 
   GridCommand parseSetCol() {
     if (arguments.length < 3) {
-      throw new ParseError(
+      throw ParseError(
           'invalid arguments for col set, expected: `x y_off l[..]`, got: $arguments');
     }
     var x = argToInt(0);
     var yOffset = argToInt(1);
     var levels = argToIntOctet(2);
-    return new SetColCommand(x, yOffset, levels);
+    return SetColCommand(x, yOffset, levels);
   }
 
   GridCommand parseMap() {
     if (arguments.length < 3) {
-      throw new ParseError(
+      throw ParseError(
           'invalid arguments for col set, expected: `x_off y_off l[64]`, got: $arguments');
     }
     var xOffset = argToInt(0);
     var yOffset = argToInt(1);
     var levels = argToIntQuad(2);
-    return new MapCommand(xOffset, yOffset, levels);
+    return MapCommand(xOffset, yOffset, levels);
   }
 
   int argToInt(int index) => toInt(arguments[index]);
 
   int toInt(Object argument) {
     if (argument is! int) {
-      throw new ParseError('expected int, got: ${toTypeString(argument)}');
+      throw ParseError('expected int, got: ${toTypeString(argument)}');
     }
     return argument;
   }
@@ -244,7 +243,7 @@ class OSCMessageParser {
   List<int> argToIntOctet(int index) {
     final remaining = arguments.length - index;
     if (remaining % 8 != 0) {
-      throw new ParseError('expected multiple of 8 values, got: $remaining}');
+      throw ParseError('expected multiple of 8 values, got: $remaining}');
     }
 
     var octet = <int>[remaining];
@@ -258,7 +257,7 @@ class OSCMessageParser {
   List<int> argToIntQuad(int index) {
     final remaining = arguments.length - index;
     if (remaining != 64) {
-      throw new ParseError('expected quad (64) of values, got: $remaining}');
+      throw ParseError('expected quad (64) of values, got: $remaining}');
     }
 
     var octet = <int>[remaining];
@@ -274,8 +273,7 @@ class OSCMessageParser {
 
   void assertArgs(int length) {
     if (arguments.length != length) {
-      throw new ParseError(
-          'expected $length arguments, got: ${arguments.length}');
+      throw ParseError('expected $length arguments, got: ${arguments.length}');
     }
   }
 }
