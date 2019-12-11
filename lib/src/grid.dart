@@ -172,29 +172,29 @@ class OSCMessageParser {
 
   GridCommand parseLevelSet() {
     assertArgs(3);
-    var x = argToInt(0);
-    var y = argToInt(1);
-    var level = argToInt(2);
+    final x = argToInt(0);
+    final y = argToInt(1);
+    final level = argToInt(2);
     return LevelSetCommand(x, y, level);
   }
 
   GridCommand parseStateSet() {
     assertArgs(3);
-    var x = argToInt(0);
-    var y = argToInt(1);
-    var state = argToInt(2);
+    final x = argToInt(0);
+    final y = argToInt(1);
+    final state = argToInt(2);
     return StateSetCommand(x, y, state);
   }
 
   GridCommand parseSetAll() {
     assertArgs(1);
-    var level = argToInt(0);
+    final level = argToInt(0);
     return LevelSetAllCommand(level);
   }
 
   GridCommand parseStateSetAll() {
     assertArgs(1);
-    var state = argToInt(0);
+    final state = argToInt(0);
     return StateSetAllCommand(state);
   }
 
@@ -203,9 +203,9 @@ class OSCMessageParser {
       throw ParseError(
           'invalid arguments for row set, expected: `x_off y l[..]`, got: $arguments');
     }
-    var x = argToInt(0);
-    var y = argToInt(1);
-    var levels = argToIntOctet(2);
+    final x = argToInt(0);
+    final y = argToInt(1);
+    final levels = argToIntOctet(2);
     return SetRowCommand(x, y, levels);
   }
 
@@ -214,9 +214,9 @@ class OSCMessageParser {
       throw ParseError(
           'invalid arguments for col set, expected: `x y_off l[..]`, got: $arguments');
     }
-    var x = argToInt(0);
-    var yOffset = argToInt(1);
-    var levels = argToIntOctet(2);
+    final x = argToInt(0);
+    final yOffset = argToInt(1);
+    final levels = argToIntOctet(2);
     return SetColCommand(x, yOffset, levels);
   }
 
@@ -225,9 +225,9 @@ class OSCMessageParser {
       throw ParseError(
           'invalid arguments for col set, expected: `x_off y_off l[64]`, got: $arguments');
     }
-    var xOffset = argToInt(0);
-    var yOffset = argToInt(1);
-    var levels = argToIntQuad(2);
+    final xOffset = argToInt(0);
+    final yOffset = argToInt(1);
+    final levels = argToIntQuad(2);
     return MapCommand(xOffset, yOffset, levels);
   }
 
@@ -246,7 +246,7 @@ class OSCMessageParser {
       throw ParseError('expected multiple of 8 values, got: $remaining}');
     }
 
-    var octet = <int>[remaining];
+    final octet = <int>[remaining];
     for (var value in arguments.sublist(index)) {
       octet.add(toInt(value));
     }
@@ -260,7 +260,7 @@ class OSCMessageParser {
       throw ParseError('expected quad (64) of values, got: $remaining}');
     }
 
-    var octet = <int>[remaining];
+    final octet = <int>[remaining];
     for (var value in arguments.sublist(index)) {
       octet.add(toInt(value));
     }
@@ -280,7 +280,7 @@ class OSCMessageParser {
 
 /// Thrown in case of parse error.
 class ParseError extends Error {
-  Object detail;
+  final Object detail;
 
   ParseError(this.detail);
 
